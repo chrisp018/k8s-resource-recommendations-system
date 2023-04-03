@@ -22,4 +22,3 @@ for index, row in df.iterrows():
             time.sleep(seconds)
     else:
         time.sleep(60)
-    
