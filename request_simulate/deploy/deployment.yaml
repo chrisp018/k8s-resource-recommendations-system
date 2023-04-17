@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: request-simulate
+  namespace: request-simulate
+  labels:
+    app: request-simulate
+  annotations:
+    prometheus.io/path: /stats/prometheus
+    prometheus.io/port: "15020"
+    prometheus.io/scrape: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: request-simulate
+  template:
+    metadata:
+      labels:
+        app: request-simulate
+      annotations:
+        prometheus.io/path: /stats/prometheus
+        prometheus.io/port: "15020"
+        prometheus.io/scrape: "true"
+    spec:
+      containers:
+      - name: request-simulate
+        image: 832438989008.dkr.ecr.ap-southeast-1.amazonaws.com/request-simulate:v17-simulate-prometheus@sha256:b13870069e21e3521ffd5a02e72c536436da3ff0d6c66edfb3607521992a41d4
+        ports:
+        - name: prometheus
+          containerPort: 8000
+        livenessProbe:
+          exec:
+            command:
+            - cat
+            - /app/healthy
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        # readinessProbe:
+        #   httpGet:
+        #     path: /healthz/ready
+        #     port: 5000
+        #   initialDelaySeconds: 5
+        #   periodSeconds: 5

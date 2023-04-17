@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: request-simulate
+  namespace: request-simulate
+  annotations:
+    prometheus.io/path: /stats/prometheus
+    prometheus.io/port: "15020"
+    prometheus.io/scrape: "true"
+spec:
+  selector:
+    app: request-simulate
+  ports:
+    - name: simu-request-prometheus
+      protocol: TCP
+      port: 8000
+      targetPort: 8000

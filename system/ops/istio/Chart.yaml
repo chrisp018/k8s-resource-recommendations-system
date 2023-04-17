@@ -1,0 +1,11 @@
+apiVersion: v2
+name: istio
+description: A Helm chart template for Istio system
+type: application
+version: 0.0.1
+appVersion: "0.1.0"
+dependencies:
+  - name: base
+    version: 1.17.2
+  - name: istiod
+    version: 1.17.2

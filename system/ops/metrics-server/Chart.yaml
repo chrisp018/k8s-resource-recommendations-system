@@ -1,0 +1,6 @@
+apiVersion: v2
+name: metrics-server
+description: A Helm chart template for metrics-server
+type: application
+version: 0.0.1
+appVersion: "0.1.0"

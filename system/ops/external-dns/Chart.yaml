@@ -1,0 +1,9 @@
+apiVersion: v2
+name: External DNS
+description: A Helm chart template for External DNS
+type: application
+version: 0.0.1
+appVersion: "0.1.0"
+dependencies:
+  - name: external-dns
+    version: 6.17.0

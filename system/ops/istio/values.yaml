@@ -1,0 +1,22 @@
+istiod:
+  global:
+    logging:
+      level: "default:error"
+
+    istioNamespace: istio-system
+
+    defaultResources:
+      request:
+        cpu: 10m
+
+  pilot:
+    resources:
+      requests:
+        cpu: 200m
+        memory: 1024Mi
+
+  sidecarInjectorWebhook:
+    enableNamespacesByDefault: false
+  
+  meshConfig:
+    enablePrometheusMerge: false
