@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: predictcontroller
+  namespace: predictcontroller
+  labels:
+    app: predictcontroller
+  annotations:
+    prometheus.io/path: /stats/prometheus
+    prometheus.io/port: "15020"
+    prometheus.io/scrape: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: predictcontroller
+  template:
+    metadata:
+      labels:
+        app: predictcontroller
+      annotations:
+        prometheus.io/path: /stats/prometheus
+        prometheus.io/port: "15020"
+        prometheus.io/scrape: "true"
+    spec:
+      containers:
+      - name: predictcontroller
+        image: 832438989008.dkr.ecr.ap-southeast-1.amazonaws.com/predictcontroller@sha256:90af59cb88c57a140dde15014bc10cf4d73ca38ed623ce1199a2f3a1af0b3acd
+        ports:
+        - containerPort: 5000
+        livenessProbe:
+          exec:
+            command:
+            - cat
+            - /app/healthy
+          initialDelaySeconds: 5
+          periodSeconds: 5

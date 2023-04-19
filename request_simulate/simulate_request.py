@@ -21,7 +21,6 @@ start_http_server(8000)
 
 time.sleep(30)
 while True:
-    # print('ok')
     for index, row in df.iterrows():
         sum_bytes = row['sum_bytes']
         sum_requests = row['event_count']
@@ -36,8 +35,6 @@ while True:
                 rs = requests.get(endpoint, params=params, headers={'Accept': 'application/octet-stream'})
                 REQUEST_COUNT.inc()
                 RESPONSE_SIZE.observe(len(rs.content))
-                # print('Status code:', rs.status_code)
-                # print('Return bytes:', rs.headers.get('Content-Length'))
                 time.sleep(seconds)
             print(f"Request sent: {count}")
         else:

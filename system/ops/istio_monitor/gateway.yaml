@@ -5,16 +5,15 @@ metadata:
   namespace: istio-system
 spec:
   hosts:
-  - 'prometheus.khanh-thesis.online'
+  - '*'
   gateways: 
     - istio
-  http:
-    - name: "prometheus"
-      route:
-        - destination:
-            port:
-              number: 9090
-            host: prometheus.istio-system.svc.cluster.local
+  tcp:
+  - route:
+      - destination:
+          port:
+            number: 9090
+          host: prometheus.istio-system.svc.cluster.local
 ---
 apiVersion: networking.istio.io/v1beta1
 kind: Gateway
@@ -27,7 +26,7 @@ spec:
   servers:
   - port:
       number: 80
-      name: http
-      protocol: HTTP
+      name: tcp
+      protocol: tcp
     hosts:
     - "prometheus.khanh-thesis.online"

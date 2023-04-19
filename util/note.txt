@@ -1,5 +1,7 @@
 istio_response_bytes_sum{destination_app='appsimulate', source_app='request-simulate'}
+
 rate(istio_requests_total{source_app="request-simulate", destination_app="appsimulate", response_code="200", connection_security_policy="unknown"}[1m])*60
+
 rate(istio_response_bytes_sum{source_app="request-simulate", destination_app="appsimulate", response_code="200", connection_security_policy="unknown"}[1m]) * 50 - rate(istio_requests_total{source_app="request-simulate", destination_app="appsimulate", response_code="200", connection_security_policy="unknown"}[1m]) * 50*150
 curl http://localhost:15000/stats?filter=istio.*
 
@@ -10,3 +12,5 @@ curl https://appsimulate.appsimulate.svc.cluster.local:15000/stats
 curl http://172.21.52.95:1500/stats
 
 kubectl get endpoints istiod -n istio-system -o json
+
+kubectl get endpoints request-simulate -n request-simulate -o json
