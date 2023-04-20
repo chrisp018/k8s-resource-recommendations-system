@@ -5,14 +5,21 @@ from datetime import timedelta
 from prometheus_api_client import PrometheusConnect
 from prometheus_api_client.utils import parse_datetime
 
+
+# config values
+past_trigger_time = "1998-04-30 21:30:00"
+current_trigger_time = "2023-04-20 14:24:00"
+
+
 # Load the Excel file into a Pandas DataFrame
-df = pd.read_excel('wc_dataset_processed.csv')
-df['event_time'] = pd.to_datetime(df['event_time'])
-df = df.set_index('event_time')
+wc_dataset = pd.read_csv('wc_dataset_processed.csv', usecols=['event_time', 'num_match_event'])
+wc_dataset['event_time'] = pd.to_datetime(wc_dataset['event_time'])
+wc_dataset = wc_dataset.set_index('event_time')
 
 
 # Connect to Prometheus server
 prom = PrometheusConnect(url="http://prometheus.khanh-thesis.online", disable_ssl=True)
+
 
 start_time = parse_datetime("9minutes")
 end_time = parse_datetime("now")
@@ -20,6 +27,7 @@ step = "1m"
 def find_events(timestamp):
     num_match_event = df.loc[timestamp, 'num_match_event']
     print(num_match_event)
+
 
 def get_metrics(start_time, end_time, step):
     metric_data_request_count = prom.custom_query_range(
@@ -47,14 +55,30 @@ def get_metrics(start_time, end_time, step):
     df['sum_bytes'] = df['sum_bytes'].astype(int)
     return df
 
+
 rs = get_metrics(start_time, end_time, step)
-print(rs)
+rs['timestamp'] = pd.to_datetime(rs['timestamp'], unit='s').apply(lambda x: x + timedelta(minutes=1) - timedelta(seconds=x.second))
 
-# past_trigger_time = "1998-04-30 21:45:00"
-# current_trigger_time = "2034-04-30 21:45:00"
-# time_offset = past_trigger_time - current_trigger_time
 
-# past_read_timedata = current_read_timedata - time_offset
+# convert the datetime strings to datetime objects
+past_datetime = datetime.strptime(past_trigger_time, '%Y-%m-%d %H:%M:%S')
+current_datetime = datetime.strptime(current_trigger_time, '%Y-%m-%d %H:%M:%S')
 
-# # get match value in excel match the time
-# past_read_timedata = "1998-04-30 21:45:00"
+
+# calculate the time offset between the datetime objects
+time_offset = current_datetime - past_datetime
+current_read_timedata = datetime.now().replace(second=0, microsecond=0)
+past_read_timedata = current_read_timedata - time_offset
+
+
+# subtract datetime offset from timestamp column
+rs['timestamp'] = rs['timestamp'] - time_offset
+
+# merge the two dataframes on the datetime columns
+merged_df = pd.merge(wc_dataset, rs, left_on='event_time', right_on='timestamp', how='right')
+
+# fill missing values with 0 for the num_match_event column
+merged_df['num_match_event'] = merged_df['num_match_event'].fillna(0)
+merged_df = merged_df.reindex(columns=['timestamp', 'request_count', 'sum_bytes', 'num_match_event'])
+
+print(merged_df)
