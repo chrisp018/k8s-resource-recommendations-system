@@ -2,3 +2,6 @@ requests==2.22.0
 pandas==1.5.3
 numpy==1.24.2
 prometheus_client
+prometheus_api_client
+joblib
+scikit-learn

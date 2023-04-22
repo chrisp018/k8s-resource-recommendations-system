@@ -4,6 +4,7 @@ aws eks update-kubeconfig --name app --region ap-southeast-1
 alias k=kubectl
 k create ns external-dns
 k create ns istio-system
+k create ns metrics-server
 k create ns istio-ingress
 k create ns kiali-operator
 k create ns appsimulate

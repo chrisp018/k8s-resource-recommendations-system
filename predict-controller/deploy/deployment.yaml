@@ -25,10 +25,17 @@ spec:
     spec:
       containers:
       - name: predictcontroller
-        image: 832438989008.dkr.ecr.ap-southeast-1.amazonaws.com/predictcontroller@sha256:90af59cb88c57a140dde15014bc10cf4d73ca38ed623ce1199a2f3a1af0b3acd
+        image: 832438989008.dkr.ecr.ap-southeast-1.amazonaws.com/predictcontroller@sha256:4ab9e54dbce36ffb767185ea3d8ecb974f8a38b79ecef32b2b07cb71e241db2d
         ports:
-        - containerPort: 5000
+        - containerPort: 8000
         livenessProbe:
+          exec:
+            command:
+            - cat
+            - /app/healthy
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        readinessProbe:
           exec:
             command:
             - cat

@@ -58,6 +58,14 @@ data:
       - source_labels: [__meta_kubernetes_endpoints_name]
         action: keep
         regex: request-simulate
+    - job_name: predict-controller
+      metrics_path: /stats/prometheus
+      kubernetes_sd_configs:
+      - role: endpoints
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_endpoints_name]
+        action: keep
+        regex: predictcontroller
   recording_rules.yml: |
     {}
   rules: |

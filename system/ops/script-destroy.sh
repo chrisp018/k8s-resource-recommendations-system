@@ -27,11 +27,11 @@ k delete -f .
 cd ..
 
 cd ../..
-cd appsimulate/deploy
+cd app-simulate/deploy
 k delete -f . 
 
 cd ../..
-cd request_simulate/deploy 
+cd request-simulate/deploy 
 k delete -f .
 
 cd ../..
@@ -39,6 +39,10 @@ cd system/ops
 
 
 k delete ns external-dns
-k delete ns istio-istio
+k delete ns istio-system
+k delete ns metrics-server
 k delete ns istio-ingress
 k delete ns kiali-operator
+k delete ns appsimulate
+k delete ns request-simulate
+k delete ns predictcontroller
