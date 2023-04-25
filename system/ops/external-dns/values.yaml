@@ -1,20 +1,14 @@
 external-dns:
   rbac:
     create: true
-
   logLevel: debug 
-
   sources:
     - service
     - ingress
     - istio-gateway
-
   policy: sync
-
   txtOwnerId: khanh-thesis.online
-
   domainFilters:
     - khanh-thesis.online
-
   exterArgs:
     - --aws-zone-typ=public

@@ -1,0 +1,25 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: app-simulate-hpa-external
+  namespace: app-simulate
+spec:
+  metrics:
+  - type: External
+    external:
+      metric:
+        name: predicted_prometheus
+        selector:
+          matchLabels:
+            job: predict-controller
+            namespace: app-simulate
+            pod: app-simulate
+      target:
+        type: AverageValue
+        averageValue: 150
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: app-simulate
+  minReplicas: 1
+  maxReplicas: 15

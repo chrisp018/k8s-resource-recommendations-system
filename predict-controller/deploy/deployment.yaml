@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: predictcontroller
-  namespace: predictcontroller
+  name: predict-controller
+  namespace: predict-controller
   labels:
-    app: predictcontroller
+    app: predict-controller
   annotations:
     prometheus.io/path: /stats/prometheus
     prometheus.io/port: "15020"
@@ -13,19 +13,19 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: predictcontroller
+      app: predict-controller
   template:
     metadata:
       labels:
-        app: predictcontroller
+        app: predict-controller
       annotations:
         prometheus.io/path: /stats/prometheus
         prometheus.io/port: "15020"
         prometheus.io/scrape: "true"
     spec:
       containers:
-      - name: predictcontroller
-        image: 832438989008.dkr.ecr.ap-southeast-1.amazonaws.com/predictcontroller@sha256:4ab9e54dbce36ffb767185ea3d8ecb974f8a38b79ecef32b2b07cb71e241db2d
+      - name: predict-controller
+        image: 832438989008.dkr.ecr.ap-southeast-1.amazonaws.com/predict-controller@sha256:4ab9e54dbce36ffb767185ea3d8ecb974f8a38b79ecef32b2b07cb71e241db2d
         ports:
         - containerPort: 8000
         livenessProbe:

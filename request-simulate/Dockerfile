@@ -10,7 +10,7 @@ COPY healthy healthy
 
 COPY wc_dataset_processed.csv wc_dataset_processed.csv
 
-COPY simulate_request.py app.py
+COPY simulate-request.py app.py
 
 EXPOSE 8000
 

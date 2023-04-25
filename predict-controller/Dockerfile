@@ -12,7 +12,7 @@ COPY healthy healthy
 
 COPY wc_dataset_processed.csv wc_dataset_processed.csv
 
-COPY predictcontroller.py app.py
+COPY predict-controller.py app.py
 
 EXPOSE 8000
 

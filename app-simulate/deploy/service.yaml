@@ -1,15 +1,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: appsimulate
-  namespace: appsimulate
+  name: app-simulate
+  namespace: app-simulate
   annotations:
     prometheus.io/path: /stats/prometheus
     prometheus.io/port: "15020"
     prometheus.io/scrape: "true"
 spec:
   selector:
-    app: appsimulate
+    app: app-simulate
   ports:
     - name: app-port
       protocol: TCP

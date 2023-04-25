@@ -1,0 +1,12 @@
+prometheus-adapter:
+  prometheus:
+    url: http://prometheus.istio-system.svc.cluster.local
+    port: 9090
+    path: ""
+  rules:
+    default: true
+    external:
+    - seriesQuery: 'predicted_prometheus{job="predict-controller", namespace="app-simulate", pod="app-simulate"}'
+      metricsQuery: 'predicted_prometheus{job="predict-controller"}'
+      resources:
+        namespaced: false

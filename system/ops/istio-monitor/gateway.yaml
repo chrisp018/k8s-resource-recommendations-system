@@ -6,7 +6,7 @@ metadata:
 spec:
   hosts:
   - '*'
-  gateways: 
+  gateways:
     - istio
   tcp:
   - route:
