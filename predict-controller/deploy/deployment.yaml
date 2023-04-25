@@ -25,7 +25,7 @@ spec:
     spec:
       containers:
       - name: predict-controller
-        image: 832438989008.dkr.ecr.ap-southeast-1.amazonaws.com/predict-controller@sha256:4ab9e54dbce36ffb767185ea3d8ecb974f8a38b79ecef32b2b07cb71e241db2d
+        image: 832438989008.dkr.ecr.ap-southeast-1.amazonaws.com/predict-controller@sha256:b83b43a270ef94ab28e73d5ccb92b8ca82e25bea069e81209df892701535a10d
         ports:
         - containerPort: 8000
         livenessProbe:

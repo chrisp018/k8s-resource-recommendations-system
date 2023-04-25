@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import time
+import boto3
 from datetime import datetime
 from datetime import timedelta
 from prometheus_api_client import PrometheusConnect
@@ -9,6 +10,8 @@ from prometheus_client import start_http_server, Gauge
 from tensorflow.keras.models import load_model
 from joblib import load
 from sklearn.preprocessing import MinMaxScaler
+
+region = 'ap-southeast-1'
 
 
 # import model saved
@@ -25,8 +28,20 @@ start_http_server(8000)
 # config values
 # convert the datetime strings to datetime objects
 # calculate the time offset between the datetime objects
-past_trigger_time = "1998-04-30 21:30:00"
-current_trigger_time = "2023-04-20 14:24:00"
+ssm = boto3.client('ssm', region_name=region)
+response_past_trigger = ssm.get_parameter(
+    Name='/khanh-thesis/past_trigger_time',
+    WithDecryption=True
+)
+response_current_trigger = ssm.get_parameter(
+    Name='/khanh-thesis/current_trigger_time',
+    WithDecryption=True
+)
+
+past_trigger_time = response_past_trigger['Parameter']['Value']
+current_trigger_time = response_current_trigger['Parameter']['Value']
+print("past_trigger_time:", past_trigger_time)
+print("current_trigger_time:", current_trigger_time)
 past_datetime = datetime.strptime(past_trigger_time, '%Y-%m-%d %H:%M:%S')
 current_datetime = datetime.strptime(current_trigger_time, '%Y-%m-%d %H:%M:%S')
 time_offset = current_datetime - past_datetime
@@ -42,13 +57,13 @@ prom = PrometheusConnect(url="http://prometheus.khanh-thesis.online", disable_ss
 
 def get_metrics(start_time, end_time, step):
     metric_data_request_count = prom.custom_query_range(
-        query='sum(rate(istio_requests_total{source_app="request-simulate", destination_app="appsimulate", response_code="200", connection_security_policy="unknown", job="envoy-stats"}[1m])) * 50',
+        query='sum(rate(istio_requests_total{source_app="request-simulate", destination_app="app-simulate", response_code="200", connection_security_policy="unknown", job="envoy-stats"}[1m])) * 50',
         start_time=start_time,
         end_time=end_time,
         step=step,
     )
     metric_data_sum_bytes = prom.custom_query_range(
-        query='sum(rate(istio_response_bytes_sum{source_app="request-simulate", destination_app="appsimulate", response_code="200", connection_security_policy="unknown", job="envoy-stats"}[1m]) * 50)',
+        query='sum(rate(istio_response_bytes_sum{source_app="request-simulate", destination_app="app-simulate", response_code="200", connection_security_policy="unknown", job="envoy-stats"}[1m]) * 50)',
         start_time=start_time,
         end_time=end_time,
         step=step,
@@ -88,16 +103,15 @@ while True:
     end_time = parse_datetime("now")
     step = "1m"
     rs = get_metrics(start_time, end_time, step)
-    if rs != False:
-        rs['timestamp'] = pd.to_datetime(rs['timestamp'], unit='s').apply(lambda x: x + timedelta(minutes=1) - timedelta(seconds=x.second))
-        rs['timestamp'] = rs['timestamp'] - time_offset
-        merged_df = pd.merge(wc_dataset, rs, left_on='event_time', right_on='timestamp', how='right')
-        merged_df['num_match_event'] = merged_df['num_match_event'].fillna(0) # fill missing values with 0
-        merged_df = merged_df.reindex(columns=['timestamp', 'request_count', 'sum_bytes', 'num_match_event'])
-        merged_df = merged_df.drop('timestamp', axis=1)
+    rs['timestamp'] = pd.to_datetime(rs['timestamp'], unit='s').apply(lambda x: x + timedelta(minutes=1) - timedelta(seconds=x.second))
+    rs['timestamp'] = rs['timestamp'] - time_offset
+    merged_df = pd.merge(wc_dataset, rs, left_on='event_time', right_on='timestamp', how='right')
+    merged_df['num_match_event'] = merged_df['num_match_event'].fillna(0) # fill missing values with 0
+    merged_df = merged_df.reindex(columns=['timestamp', 'request_count', 'sum_bytes', 'num_match_event'])
+    merged_df = merged_df.drop('timestamp', axis=1)
 
-        predicted_value = predict_values(merged_df, scaler_eventcount, scaler)
-        print(int(predicted_value[0][0]))
-        predicted_prometheus.set(int(predicted_value[0][0]))
+    predicted_value = predict_values(merged_df, scaler_eventcount, scaler)
+    print(int(predicted_value[0][0]))
+    predicted_prometheus.set(int(predicted_value[0][0]))
 
     time.sleep(60)
