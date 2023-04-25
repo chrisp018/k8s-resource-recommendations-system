@@ -1,5 +1,5 @@
 module "infra-network" {
-  source             = "../network"
+  source             = "../vpc"
   environment        = var.environment
   cidr_block         = var.vpc_cidr_block
   eks_cluster_name   = var.eks_cluster_name
