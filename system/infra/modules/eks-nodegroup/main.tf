@@ -100,6 +100,11 @@ resource "aws_iam_role_policy_attachment" "AmazonSSMManagedInstanceCore" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
+resource "aws_iam_role_policy_attachment" "AmazonSSMFullAccess" {
+  role       = aws_iam_role.this.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMFullAccess"
+}
+
 resource "aws_iam_role_policy_attachment" "Route53" {
   role       = aws_iam_role.this.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonRoute53FullAccess"
