@@ -18,10 +18,6 @@ cd metrics-server
 helm uninstall metrics-server  -n metrics-server 
 cd ..
 
-cd kiali
-helm uninstall kiali-operator  -n kiali-operator
-cd ..
-
 cd istio_monitor
 k delete -f . 
 cd ..
