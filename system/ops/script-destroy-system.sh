@@ -18,7 +18,7 @@ cd metrics-server
 helm uninstall metrics-server  -n metrics-server 
 cd ..
 
-cd istio_monitor
+cd istio-monitor
 k delete -f . 
 cd ..
 
