@@ -68,7 +68,9 @@ def get_metrics(start_time, end_time, step):
         end_time=end_time,
         step=step,
     )
-    # print(len(metric_data_request_count[0].get("values")))
+
+    if len(metric_data_request_count) == 0:
+        return False
     if len(metric_data_request_count[0].get("values")) != 10:
         return False
 
@@ -103,15 +105,16 @@ while True:
     end_time = parse_datetime("now")
     step = "1m"
     rs = get_metrics(start_time, end_time, step)
-    rs['timestamp'] = pd.to_datetime(rs['timestamp'], unit='s').apply(lambda x: x + timedelta(minutes=1) - timedelta(seconds=x.second))
-    rs['timestamp'] = rs['timestamp'] - time_offset
-    merged_df = pd.merge(wc_dataset, rs, left_on='event_time', right_on='timestamp', how='right')
-    merged_df['num_match_event'] = merged_df['num_match_event'].fillna(0) # fill missing values with 0
-    merged_df = merged_df.reindex(columns=['timestamp', 'request_count', 'sum_bytes', 'num_match_event'])
-    merged_df = merged_df.drop('timestamp', axis=1)
+    if rs != False:
+        rs['timestamp'] = pd.to_datetime(rs['timestamp'], unit='s').apply(lambda x: x + timedelta(minutes=1) - timedelta(seconds=x.second))
+        rs['timestamp'] = rs['timestamp'] - time_offset
+        merged_df = pd.merge(wc_dataset, rs, left_on='event_time', right_on='timestamp', how='right')
+        merged_df['num_match_event'] = merged_df['num_match_event'].fillna(0) # fill missing values with 0
+        merged_df = merged_df.reindex(columns=['timestamp', 'request_count', 'sum_bytes', 'num_match_event'])
+        merged_df = merged_df.drop('timestamp', axis=1)
 
-    predicted_value = predict_values(merged_df, scaler_eventcount, scaler)
-    print(int(predicted_value[0][0]))
-    predicted_prometheus.set(int(predicted_value[0][0]))
+        predicted_value = predict_values(merged_df, scaler_eventcount, scaler)
+        print(int(predicted_value[0][0]))
+        predicted_prometheus.set(int(predicted_value[0][0]))
 
     time.sleep(60)
