@@ -105,7 +105,7 @@ while True:
     end_time = parse_datetime("now")
     step = "1m"
     rs = get_metrics(start_time, end_time, step)
-    if rs != False:
+    if rs.empty:
         rs['timestamp'] = pd.to_datetime(rs['timestamp'], unit='s').apply(lambda x: x + timedelta(minutes=1) - timedelta(seconds=x.second))
         rs['timestamp'] = rs['timestamp'] - time_offset
         merged_df = pd.merge(wc_dataset, rs, left_on='event_time', right_on='timestamp', how='right')
