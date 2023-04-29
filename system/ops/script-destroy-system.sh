@@ -22,6 +22,10 @@ cd istio-monitor
 k delete -f . 
 cd ..
 
+cd prometheus-adapter
+helm uninstall prometheus-adapter -n prometheus-adapter
+cd ..
+
 cd ../..
 cd system/ops
 
@@ -30,3 +34,4 @@ k delete ns external-dns
 k delete ns istio-system
 k delete ns metrics-server
 k delete ns istio-ingress
+k delete ns prometheus-adapter

@@ -7,6 +7,6 @@ prometheus-adapter:
     default: true
     external:
     - seriesQuery: 'predicted_prometheus{job="predict-controller", namespace="app-simulate", pod="app-simulate"}'
-      metricsQuery: 'predicted_prometheus{job="predict-controller"}'
+      metricsQuery: 'sum(predicted_prometheus{job="predict-controller"})'
       resources:
         namespaced: false

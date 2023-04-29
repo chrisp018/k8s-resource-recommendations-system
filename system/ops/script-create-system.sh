@@ -5,6 +5,7 @@ k create ns external-dns
 k create ns istio-system
 k create ns metrics-server
 k create ns istio-ingress
+k create ns prometheus-adapter
 
 cd external-dns
 helm install -f values.yaml external-dns . -n external-dns 
@@ -26,6 +27,10 @@ cd ..
 sleep 10
 cd istio-monitor
 k apply -f . 
+cd ..
+
+cd prometheus-adapter
+helm install -f values.yaml prometheus-adapter . -n prometheus-adapter
 cd ..
 
 cd ../..
