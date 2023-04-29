@@ -16,7 +16,7 @@ spec:
             pod: app-simulate
       target:
         type: AverageValue
-        averageValue: 150
+        averageValue: 50000
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
