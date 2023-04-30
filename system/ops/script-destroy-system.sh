@@ -26,6 +26,10 @@ cd prometheus-adapter
 helm uninstall prometheus-adapter -n prometheus-adapter
 cd ..
 
+cd kube-state-metrics
+helm uninstall kube-state-metrics -n kube-state-metrics
+cd ..
+
 cd ../..
 cd system/ops
 
@@ -35,3 +39,4 @@ k delete ns istio-system
 k delete ns metrics-server
 k delete ns istio-ingress
 k delete ns prometheus-adapter
+k delete ns kube-state-metrics

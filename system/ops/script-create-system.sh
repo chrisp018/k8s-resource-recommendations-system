@@ -6,6 +6,7 @@ k create ns istio-system
 k create ns metrics-server
 k create ns istio-ingress
 k create ns prometheus-adapter
+k create ns kube-state-metrics
 
 cd external-dns
 helm install -f values.yaml external-dns . -n external-dns 
@@ -31,6 +32,10 @@ cd ..
 
 cd prometheus-adapter
 helm install -f values.yaml prometheus-adapter . -n prometheus-adapter
+cd ..
+
+cd kube-state-metrics
+helm install -f values.yaml kube-state-metrics . -n kube-state-metrics
 cd ..
 
 cd ../..

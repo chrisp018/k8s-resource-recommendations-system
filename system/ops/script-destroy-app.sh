@@ -12,7 +12,3 @@ k delete -f .
 
 cd ../..
 cd system/ops
-
-k delete ns app-simulate
-k delete ns request-simulate
-k delete ns predict-controller
