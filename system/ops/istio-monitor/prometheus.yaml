@@ -74,6 +74,13 @@ data:
         regex: ''
         replacement: 'app-simulate'
         target_label: 'pod'
+    - job_name: 'kube-state-metrics'
+      static_configs:
+      - targets: ['kube-state-metrics.kube-state-metrics.svc.cluster.local:8080']
+      relabel_configs:
+        - source_labels: [status]
+          regex: 'failed'
+          action: drop
   recording_rules.yml: |
     {}
   rules: |
