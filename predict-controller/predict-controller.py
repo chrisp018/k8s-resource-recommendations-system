@@ -70,9 +70,9 @@ def get_metrics(start_time, end_time, step):
     )
 
     if len(metric_data_request_count) == 0:
-        return False
+        return pd.DataFrame()
     if len(metric_data_request_count[0].get("values")) != 10:
-        return False
+        return pd.DataFrame()
 
     df = pd.DataFrame(metric_data_request_count[0].get("values"), columns=['timestamp', 'request_count'])
     sum_bytes = [ i[1] for i in metric_data_sum_bytes[0].get("values") ]
