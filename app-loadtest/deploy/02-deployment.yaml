@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-loadtest
+  namespace: app-loadtest
+  labels:
+    app: app-loadtest
+  annotations:
+    prometheus.io/path: /stats/prometheus
+    prometheus.io/port: "15020"
+    prometheus.io/scrape: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-loadtest
+  template:
+    metadata:
+      labels:
+        app: app-loadtest
+      annotations:
+        prometheus.io/path: /stats/prometheus
+        prometheus.io/port: "15020"
+        prometheus.io/scrape: "true"
+    spec:
+      containers:
+      - name: app-loadtest
+        image: 832438989008.dkr.ecr.ap-southeast-1.amazonaws.com/app-loadtest@sha256:91ed3da6299b38b3294e0bf0416e395a4aa217b7b2e895b1fe39295220b43315
+        ports:
+        - name: prometheus
+          containerPort: 8000
+        livenessProbe:
+          exec:
+            command:
+            - cat
+            - /app/healthy
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        # readinessProbe:
+        #   httpGet:
+        #     path: /healthz/ready
+        #     port: 5000
+        #   initialDelaySeconds: 5
+        #   periodSeconds: 5

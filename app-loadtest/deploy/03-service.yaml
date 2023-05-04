@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-loadtest
+  namespace: app-loadtest
+  annotations:
+    prometheus.io/path: /stats/prometheus
+    prometheus.io/port: "15020"
+    prometheus.io/scrape: "true"
+spec:
+  selector:
+    app: app-loadtest
+  ports:
+    - name: app-loadtest-prometheus
+      protocol: TCP
+      port: 8000
+      targetPort: 8000
