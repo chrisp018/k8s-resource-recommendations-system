@@ -44,7 +44,15 @@ variable "node_groups" {
   default = {
     on_demand = {
       disk_size        = 20
-      instance_types   = ["t2.medium", "t3.medium", "t3a.medium"]
+      instance_types   = ["m5.2xlarge", "m5a.2xlarge"]
+      capacity_type    = "SPOT"
+      desired_capacity = 1
+      max_size         = 3
+      min_size         = 1
+    }
+    system = {
+      disk_size        = 20
+      instance_types   = ["m5.2xlarge", "m5a.2xlarge"]
       capacity_type    = "SPOT"
       desired_capacity = 1
       max_size         = 3
