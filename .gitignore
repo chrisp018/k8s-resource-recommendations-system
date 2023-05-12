@@ -2,3 +2,50 @@
 /dataset/WorldCup_tools.tar.gz
 *.pem
 zarchive
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, build with 'go test -c'
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Go package files
+*.o
+*.a
+
+# Ignore the vendor directory
+vendor/
+
+# Ignore any file or directory starting with underscore
+_*
+
+# IDE-specific files and directories
+.vscode/
+.idea/
+
+# Compiled Object files, Static and Dynamic libs (Shared Objects)
+*.o
+*.a
+*.so
+
+# Compiled Go files
+*.test
+
+# Generated files
+*.gen.go
+
+# Ignore OS-specific generated files
+# Uncomment the line matching your operating system:
+# Windows
+# *.exe
+# Linux
+# *.out
+# macOS
+# *.out
