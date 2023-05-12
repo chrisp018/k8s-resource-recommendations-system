@@ -15,9 +15,9 @@ region = 'ap-southeast-1'
 
 
 # import model saved
-model = load_model('./model/lstm_model.h5')
-scaler_eventcount = load('./model/scaler-eventcount.joblib')
-scaler = load('./model/scaler.joblib')
+model = load_model('./model/bi-lstm-model.h5')
+scaler_eventcount = load('./model/scaler-eventcount-bi-lstm.joblib')
+scaler = load('./model/scaler-bi-lstm.joblib')
 
 
 # Create a new Gauge metric named "my_gauge" with a help message

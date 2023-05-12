@@ -11,7 +11,7 @@ from prometheus_client import start_http_server, Counter, Histogram, Gauge
 
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger('my_app')
+logger = logging.getLogger('app_loadtest')
 
 
 region = 'ap-southeast-1'
@@ -28,6 +28,7 @@ start_http_server(8000)
 
 endpoint = 'http://app-simulate.app-simulate.svc.cluster.local:5000/bytes'
 ssm = boto3.client('ssm', region_name="ap-southeast-1")
+time.sleep(5)
 rs_app_loadtest_request = ssm.get_parameter(
     Name='/khanh-thesis/app_loadtest_request',
     WithDecryption=True
@@ -39,8 +40,6 @@ rs_app_loadtest_bytes = ssm.get_parameter(
 sum_requests = int(rs_app_loadtest_request['Parameter']['Value'])
 sum_bytes = int(rs_app_loadtest_bytes['Parameter']['Value'])
 
-
-time.sleep(5)
 
 while True:
     logger.info(f"sum_requests {sum_requests}")

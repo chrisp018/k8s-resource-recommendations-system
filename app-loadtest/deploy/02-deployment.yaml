@@ -25,7 +25,7 @@ spec:
     spec:
       containers:
       - name: app-loadtest
-        image: 832438989008.dkr.ecr.ap-southeast-1.amazonaws.com/app-loadtest@sha256:91ed3da6299b38b3294e0bf0416e395a4aa217b7b2e895b1fe39295220b43315
+        image: 832438989008.dkr.ecr.ap-southeast-1.amazonaws.com/app-loadtest@sha256:b58e45cf7809394590e449719f3b8c6c053630e6a3947363778310dfa035a282
         ports:
         - name: prometheus
           containerPort: 8000

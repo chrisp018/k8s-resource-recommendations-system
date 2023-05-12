@@ -11,4 +11,8 @@ cd request-simulate/deploy
 k delete -f .
 
 cd ../..
+cd app-loadtest/deploy 
+k delete -f .
+
+cd ../..
 cd system/ops
