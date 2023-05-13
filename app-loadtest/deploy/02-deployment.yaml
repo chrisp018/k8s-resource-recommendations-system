@@ -25,7 +25,7 @@ spec:
     spec:
       containers:
       - name: app-loadtest
-        image: 832438989008.dkr.ecr.ap-southeast-1.amazonaws.com/app-loadtest@sha256:c828ab9143608ba9b0839cc2740bd2ce9ed2968c1c4e13f7b7d4aae8892e400e
+        image: 832438989008.dkr.ecr.ap-southeast-1.amazonaws.com/app-loadtest@sha256:fe22b101168b50d202579c9b558a8e8f0a5dcbacfc21a3f5e9fb28fa5062c60c
         ports:
         - name: prometheus
           containerPort: 8000
@@ -36,9 +36,3 @@ spec:
             - /app/healthy
           initialDelaySeconds: 5
           periodSeconds: 5
-        # readinessProbe:
-        #   httpGet:
-        #     path: /healthz/ready
-        #     port: 5000
-        #   initialDelaySeconds: 5
-        #   periodSeconds: 5

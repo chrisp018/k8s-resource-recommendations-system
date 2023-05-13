@@ -79,7 +79,7 @@ func init() {
 func getSSMParam(parameterName string) (string, error){
 	// Create an input object for the GetParameter API
 	input := &ssm.GetParameterInput{
-		Name:           aws.String(parameterName),
+		Name: aws.String(parameterName),
 		WithDecryption: aws.Bool(true),
 	}
 	result, err := ssmClient.GetParameter(input)
@@ -111,24 +111,28 @@ func main() {
 	}
 	queryParams := url.Values{}
 	queryParams.Set("num_bytes", appLoadtestBytesParamName)
-	requestURL := fmt.Sprintf("http://app-simulate.app-simulate.svc.cluster.local:5000/bytes?%s", queryParams.Encode())
+	// requestURL := fmt.Sprintf("http://app-simulate.app-simulate.svc.cluster.local:5000/bytes?%s", queryParams.Encode())
+	requestURL := fmt.Sprintf("http://localhost:5000/bytes?%s", queryParams.Encode())
 	duration := 60*time.Second
 	interval := duration/time.Duration(numRequests)
 
-	startTime := time.Now()
-	// Start sending requests in goroutines
-	var wg sync.WaitGroup
-	wg.Add(numRequests)
-
-	for i := 0; i < numRequests; i++ {
-		go sendRequest(&wg, requestURL)
-		time.Sleep(interval)
+	for {
+		startTime := time.Now()
+		// Start sending requests in goroutines
+		var wg sync.WaitGroup
+		wg.Add(numRequests)
+	
+		for i := 0; i < numRequests; i++ {
+			go sendRequest(&wg, requestURL)
+			time.Sleep(interval)
+		}
+		endTime := time.Now()
+		loadtestDuration := endTime.Sub(startTime)
+		loadtestSeconds := loadtestDuration.Seconds()
+		appLoadtestResponseDurationAll.Set(loadtestSeconds)
+		wg.Wait()
 	}
-	endTime := time.Now()
-	loadtestDuration := endTime.Sub(startTime)
-	loadtestSeconds := loadtestDuration.Seconds()
-	appLoadtestResponseDurationAll.Set(loadtestSeconds)
-	wg.Wait()
+	
 }
 
 
@@ -152,6 +156,7 @@ func sendRequest(wg *sync.WaitGroup, requestURL string) {
 	endTimeEachRequest := time.Now()
 	loadtestDurationEachRequest := endTimeEachRequest.Sub(startTimeEachRequest)
 	loadtestSecondsEachRequest := loadtestDurationEachRequest.Seconds()
+	fmt.Println("loadtestSecondsEachRequest ",loadtestSecondsEachRequest)
 	responseDurationEachRequest.Set(loadtestSecondsEachRequest)
 
 	// Increment the requests counter

@@ -5,28 +5,28 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"math/rand"
+	// "math/rand"
 )
 
 
-func consumeCPUMemory(n int) {
-	result := make([][]float64, 0)
+// func consumeCPUMemory(n int) {
+// 	result := make([][]float64, 0)
 
-	for i := 0; i < n; i++ {
-		// Consume CPU by computing the sum of a large random array
-		arr := make([]float64, 10000)
-		for j := 0; j < len(arr); j++ {
-			arr[j] = rand.Float64()
-		}
-		sum := 0.0
-		for _, num := range arr {
-			sum += num
-		}
+// 	for i := 0; i < n; i++ {
+// 		// Consume CPU by computing the sum of a large random array
+// 		arr := make([]float64, 10000)
+// 		for j := 0; j < len(arr); j++ {
+// 			arr[j] = rand.Float64()
+// 		}
+// 		sum := 0.0
+// 		for _, num := range arr {
+// 			sum += num
+// 		}
 
-		// Consume memory by appending the array to the result list
-		result = append(result, arr)
-	}
-}
+// 		// Consume memory by appending the array to the result list
+// 		result = append(result, arr)
+// 	}
+// }
 
 
 func byteHandler(w http.ResponseWriter, r *http.Request){
@@ -47,7 +47,7 @@ func byteHandler(w http.ResponseWriter, r *http.Request){
 		http.Error(w, "Invalid 'bytes' parameter", http.StatusBadRequest)
 		return
 	}
-	consumeCPUMemory(10)
+	// consumeCPUMemory(10)
 	// Create a byte slice of the specified length
 	data := make([]byte, numBytes)
 	// Write the byte slice as the response

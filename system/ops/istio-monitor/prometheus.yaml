@@ -59,7 +59,7 @@ data:
         action: keep
         regex: request-simulate
     - job_name: app-loadtest
-      metrics_path: /stats/prometheus
+      metrics_path: /metrics
       kubernetes_sd_configs:
       - role: endpoints
       relabel_configs:
