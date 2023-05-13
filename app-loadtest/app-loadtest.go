@@ -1,14 +1,19 @@
 package main 
 import (
-	// "fmt"
+	"fmt"
 	"log"
+	"strconv"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+    "github.com/aws/aws-sdk-go/aws"
+    "github.com/aws/aws-sdk-go/aws/session"
+    "github.com/aws/aws-sdk-go/service/ssm"
 )
 
 
@@ -45,7 +50,21 @@ var (
 	})
 )
 
+var (
+	sess *session.Session
+	ssmClient  *ssm.SSM
+)
+
 func init() {
+	region := "ap-southeast-1"
+	// Initialize the AWS session and SSM client
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String(region),
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	ssmClient = ssm.New(sess)
 	// Add go runtime metrics and process collectors.
 	prometheus.MustRegister(
 		totalRequestsProcessed,
@@ -57,16 +76,42 @@ func init() {
 	)
 }
 
+func getSSMParam(parameterName string) (string, error){
+	// Create an input object for the GetParameter API
+	input := &ssm.GetParameterInput{
+		Name:           aws.String(parameterName),
+		WithDecryption: aws.Bool(true),
+	}
+	result, err := ssmClient.GetParameter(input)
+	if err != nil {
+		return "", fmt.Errorf("failed to retrieve parameter: %v", err)
+	}
+	return *result.Parameter.Value, nil
+}
 
 func main() {
+	appLoadtestRequestParamName, err := getSSMParam("/khanh-thesis/app_loadtest_request")
+	if err != nil {
+		fmt.Println("Error retrieving request number param:", err)
+		return
+	}
+	appLoadtestBytesParamName, err := getSSMParam("/khanh-thesis/app_loadtest_bytes")
+	if err != nil {
+		fmt.Println("Error retrieving bytes:", err)
+		return
+	}
 	// Start the HTTP server to expose metrics
 	go func() {
 		http.Handle("/metrics", promhttp.Handler())
 		log.Fatal(http.ListenAndServe(":8080", nil))
 	}()
-
-	numRequests := 1000
-	requestURL := "http://google.com"
+	numRequests, err := strconv.Atoi(appLoadtestRequestParamName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	queryParams := url.Values{}
+	queryParams.Set("num_bytes", appLoadtestBytesParamName)
+	requestURL := fmt.Sprintf("http://app-simulate.app-simulate.svc.cluster.local:5000/bytes?%s", queryParams.Encode())
 	duration := 60*time.Second
 	interval := duration/time.Duration(numRequests)
 

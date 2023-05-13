@@ -1,5 +1,5 @@
 # Use the official Golang base image
-FROM golang:1.16-alpine
+FROM golang:1.20-alpine
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -17,7 +17,7 @@ COPY app-simulate.go app-simulate.go
 RUN go build -o main
 
 # Expose the port that the application listens on
-EXPOSE 8080
+EXPOSE 5000
 
 # Set the entry point for the container
 CMD ["./main"]

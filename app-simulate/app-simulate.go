@@ -88,8 +88,8 @@ func main(){
 	http.HandleFunc("/healthz/ready", healthzReadyHandler)
 	http.HandleFunc("/healthz/live", healthzLiveHandler)
 
-	fmt.Printf("Starting server at port 8080\n")
-    if err := http.ListenAndServe(":8080", nil); err != nil {
+	fmt.Printf("Starting server at port 5000\n")
+    if err := http.ListenAndServe(":5000", nil); err != nil {
         log.Fatal(err)
     }
 }
