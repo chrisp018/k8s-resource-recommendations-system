@@ -25,7 +25,7 @@ spec:
     spec:
       containers:
       - name: app-simulate
-        image: 832438989008.dkr.ecr.ap-southeast-1.amazonaws.com/app-simulate@sha256:fcd6510e8076fc88a6c80ed42e80004f7ab8dc65219566600c16f29bb9f2cc15
+        image: 832438989008.dkr.ecr.ap-southeast-1.amazonaws.com/app-simulate@sha256:041a54be3aa484c4ecfa965f62e760ea03e3004bc55997ed23e8e88daff37cbb
         ports:
         - containerPort: 5000
         livenessProbe:
