@@ -100,6 +100,10 @@ func main() {
 		fmt.Println("Error retrieving bytes:", err)
 		return
 	}
+	numBytes, err := strconv.Atoi(appLoadtestBytesParamName)
+	if err != nil {
+		log.Fatal(err)
+	}
 	// Start the HTTP server to expose metrics
 	go func() {
 		http.Handle("/metrics", promhttp.Handler())
@@ -109,13 +113,17 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	bytesResponseEachRequest := strconv.Itoa(numBytes/numRequests)
 	queryParams := url.Values{}
-	queryParams.Set("num_bytes", appLoadtestBytesParamName)
-	// requestURL := fmt.Sprintf("http://app-simulate.app-simulate.svc.cluster.local:5000/bytes?%s", queryParams.Encode())
-	requestURL := fmt.Sprintf("http://localhost:5000/bytes?%s", queryParams.Encode())
+	queryParams.Set("num_bytes", bytesResponseEachRequest)
+	requestURL := fmt.Sprintf("http://app-simulate.app-simulate.svc.cluster.local:5000/bytes?%s", queryParams.Encode())
 	duration := 60*time.Second
 	interval := duration/time.Duration(numRequests)
-
+	fmt.Println("DATA INPUT: ")
+	fmt.Println("Bytes response each request: ", bytesResponseEachRequest)
+	fmt.Println("Number of request per minutes: ", numRequests)
+	fmt.Println("Goroutine interval: ", interval)
+	fmt.Println("START SENDING REQUEST: ")
 	for {
 		startTime := time.Now()
 		// Start sending requests in goroutines
@@ -132,7 +140,6 @@ func main() {
 		appLoadtestResponseDurationAll.Set(loadtestSeconds)
 		wg.Wait()
 	}
-	
 }
 
 

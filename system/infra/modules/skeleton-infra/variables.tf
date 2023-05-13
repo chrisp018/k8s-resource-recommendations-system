@@ -50,14 +50,14 @@ variable "node_groups" {
       max_size         = 3
       min_size         = 1
     }
-    system = {
-      disk_size        = 20
-      instance_types   = ["m5.2xlarge", "m5a.2xlarge"]
-      capacity_type    = "SPOT"
-      desired_capacity = 1
-      max_size         = 3
-      min_size         = 1
-    }
+    # system = {
+    #   disk_size        = 20
+    #   instance_types   = ["m5.2xlarge", "m5a.2xlarge"]
+    #   capacity_type    = "SPOT"
+    #   desired_capacity = 1
+    #   max_size         = 3
+    #   min_size         = 1
+    # }
   }
 }
 
