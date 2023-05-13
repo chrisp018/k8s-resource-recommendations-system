@@ -1,11 +1,23 @@
-FROM python:3.9-slim-buster
+# Use the official Golang base image
+FROM golang:1.16-alpine
 
+# Set the working directory inside the container
 WORKDIR /app
 
-COPY requirements.txt .
+# Copy the Go module files
+COPY go.mod ./
 
-RUN pip install --no-cache-dir -r requirements.txt
+# Download and cache Go dependencies
+RUN go mod download
 
-COPY app.py app.py
+# Copy the rest of the application source code
+COPY app-simulate.go app-simulate.go
 
-CMD ["python", "app.py"]
+# Build the Go application
+RUN go build -o main
+
+# Expose the port that the application listens on
+EXPOSE 8080
+
+# Set the entry point for the container
+CMD ["./main"]
