@@ -103,7 +103,7 @@ func main() {
 	// Start the HTTP server to expose metrics
 	go func() {
 		http.Handle("/metrics", promhttp.Handler())
-		log.Fatal(http.ListenAndServe(":8080", nil))
+		log.Fatal(http.ListenAndServe(":8000", nil))
 	}()
 	numRequests, err := strconv.Atoi(appLoadtestRequestParamName)
 	if err != nil {

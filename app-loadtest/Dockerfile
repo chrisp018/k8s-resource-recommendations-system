@@ -4,6 +4,8 @@ FROM golang:1.20-alpine
 # Set the working directory inside the container
 WORKDIR /app
 
+COPY healthy healthy
+
 # Copy the Go module files
 COPY go.mod go.sum ./
 
@@ -17,7 +19,7 @@ COPY app-loadtest.go app-loadtest.go
 RUN go build -o main
 
 # Expose the port that the application listens on
-EXPOSE 8080
+EXPOSE 8000
 
 # Set the entry point for the container
 CMD ["./main"]
