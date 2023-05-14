@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"log"
+	// "log"
 	"net/http"
 	"strconv"
+	"sync"
 	// "math/rand"
 )
 
@@ -47,7 +48,7 @@ func byteHandler(w http.ResponseWriter, r *http.Request){
 		http.Error(w, "Invalid 'bytes' parameter", http.StatusBadRequest)
 		return
 	}
-	// consumeCPUMemory(10)
+	// consumeCPUMemory(1)
 	// Create a byte slice of the specified length
 	data := make([]byte, numBytes)
 	// Write the byte slice as the response
@@ -80,7 +81,7 @@ func healthzLiveHandler(w http.ResponseWriter, r *http.Request){
 	}
 	fmt.Fprintf(w, "ok")
 }
-
+var wg sync.WaitGroup
 
 func main(){
 	// Create new http server and register the handler
@@ -89,7 +90,12 @@ func main(){
 	http.HandleFunc("/healthz/live", healthzLiveHandler)
 
 	fmt.Printf("Starting server at port 5000\n")
-    if err := http.ListenAndServe(":5000", nil); err != nil {
-        log.Fatal(err)
-    }
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := http.ListenAndServe(":5000", nil); err != nil {
+			fmt.Println("Server error:", err)
+		}
+	}()
+	wg.Wait()
 }

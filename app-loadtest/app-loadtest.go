@@ -1,4 +1,5 @@
-package main 
+package main
+
 import (
 	"fmt"
 	"log"
@@ -15,6 +16,11 @@ import (
     "github.com/aws/aws-sdk-go/aws/session"
     "github.com/aws/aws-sdk-go/service/ssm"
 )
+
+type Task struct {
+	ID int 
+	Num int
+}
 
 
 var (
@@ -89,7 +95,10 @@ func getSSMParam(parameterName string) (string, error){
 	return *result.Parameter.Value, nil
 }
 
+
 func main() {
+	taskQueue := make(chan Task, 1000)
+	var wg sync.WaitGroup
 	appLoadtestRequestParamName, err := getSSMParam("/khanh-thesis/app_loadtest_request")
 	if err != nil {
 		fmt.Println("Error retrieving request number param:", err)
@@ -116,35 +125,54 @@ func main() {
 	bytesResponseEachRequest := strconv.Itoa(numBytes/numRequests)
 	queryParams := url.Values{}
 	queryParams.Set("num_bytes", bytesResponseEachRequest)
-	requestURL := fmt.Sprintf("http://app-simulate.app-simulate.svc.cluster.local:5000/bytes?%s", queryParams.Encode())
-	duration := 60*time.Second
+	requestURL := fmt.Sprintf("http://localhost:5000/bytes?%s", queryParams.Encode())
+	duration := 20*time.Second
 	interval := duration/time.Duration(numRequests)
 	fmt.Println("DATA INPUT: ")
 	fmt.Println("Bytes response each request: ", bytesResponseEachRequest)
 	fmt.Println("Number of request per minutes: ", numRequests)
 	fmt.Println("Goroutine interval: ", interval)
 	fmt.Println("START SENDING REQUEST: ")
+	// Create pool for goroutines
+	poolSize := 1000
+	for i := 0; i < poolSize; i++ {
+		go worker(taskQueue, i, requestURL, &wg)
+	}
 	for {
 		startTime := time.Now()
-		// Start sending requests in goroutines
-		var wg sync.WaitGroup
-		wg.Add(numRequests)
-	
-		for i := 0; i < numRequests; i++ {
-			go sendRequest(&wg, requestURL)
-			time.Sleep(interval)
+		// Generate tasks and send them to taskQueue
+		for i := 0; i < numRequests; i ++ {
+			task := Task{ID: i, Num: i + 1}
+			taskQueue <- task 
+			wg.Add(1)
 		}
+
+		// Close the taskQueue to signal that no more tasks will be added
+		// close(taskQueue)
+		wg.Wait()
 		endTime := time.Now()
 		loadtestDuration := endTime.Sub(startTime)
 		loadtestSeconds := loadtestDuration.Seconds()
+		timeSleep := 0.0
+		if loadtestSeconds < 60.0 {
+			timeSleep = 10.0 - loadtestSeconds
+		}
 		appLoadtestResponseDurationAll.Set(loadtestSeconds)
-		wg.Wait()
+		fmt.Println("loadtestSeconds: ", loadtestSeconds)
+		fmt.Println("timeSleep: ",timeSleep)
+		time.Sleep(time.Duration(int(timeSleep)) * time.Second)
+		fmt.Println("=============================")
 	}
 }
 
+func worker(taskQueue chan Task, pool int, requestURL string, wg *sync.WaitGroup) {
+	for task := range taskQueue {
+		processTask(task, pool, requestURL)
+		wg.Done()
+	}
+}
 
-func sendRequest(wg *sync.WaitGroup, requestURL string) {
-	defer wg.Done()
+func processTask(task Task, pool int, requestURL string) {
 	startTimeEachRequest := time.Now()
 	rs, err := http.Get(requestURL)
 	if err != nil {
@@ -163,7 +191,9 @@ func sendRequest(wg *sync.WaitGroup, requestURL string) {
 	endTimeEachRequest := time.Now()
 	loadtestDurationEachRequest := endTimeEachRequest.Sub(startTimeEachRequest)
 	loadtestSecondsEachRequest := loadtestDurationEachRequest.Seconds()
-	fmt.Println("loadtestSecondsEachRequest ",loadtestSecondsEachRequest)
+	// if loadtestSecondsEachRequest < 0.002 {
+	// 	fmt.Println("loadtestSecondsEachRequest ",loadtestSecondsEachRequest)
+	// }
 	responseDurationEachRequest.Set(loadtestSecondsEachRequest)
 
 	// Increment the requests counter
