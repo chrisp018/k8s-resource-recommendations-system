@@ -95,10 +95,15 @@ func getSSMParam(parameterName string) (string, error){
 	return *result.Parameter.Value, nil
 }
 
-
+var mutex sync.Mutex
 func main() {
 	taskQueue := make(chan Task, 1000)
 	var wg sync.WaitGroup
+	appLoadtestReplicasCount, err := getSSMParam("/khanh-thesis/app_loadtest_replicas")
+	if err != nil {
+		fmt.Println("Error retrieving replicas number param:", err)
+		return
+	}
 	appLoadtestRequestParamName, err := getSSMParam("/khanh-thesis/app_loadtest_request")
 	if err != nil {
 		fmt.Println("Error retrieving request number param:", err)
@@ -108,6 +113,10 @@ func main() {
 	if err != nil {
 		fmt.Println("Error retrieving bytes:", err)
 		return
+	}
+	numReplicas, err := strconv.Atoi(appLoadtestReplicasCount)
+	if err != nil {
+		log.Fatal(err)
 	}
 	numBytes, err := strconv.Atoi(appLoadtestBytesParamName)
 	if err != nil {
@@ -125,7 +134,9 @@ func main() {
 	bytesResponseEachRequest := strconv.Itoa(numBytes/numRequests)
 	queryParams := url.Values{}
 	queryParams.Set("num_bytes", bytesResponseEachRequest)
-	requestURL := fmt.Sprintf("http://localhost:5000/bytes?%s", queryParams.Encode())
+	requestURL := fmt.Sprintf("http://app-simulate.app-simulate.svc.cluster.local:5000/bytes?%s", queryParams.Encode())
+	// requestURL := fmt.Sprintf("http://localhost:5000/bytes?%s", queryParams.Encode())
+	// requestURL := fmt.Sprintf("http://google.com")
 	duration := 20*time.Second
 	interval := duration/time.Duration(numRequests)
 	fmt.Println("DATA INPUT: ")
@@ -134,14 +145,16 @@ func main() {
 	fmt.Println("Goroutine interval: ", interval)
 	fmt.Println("START SENDING REQUEST: ")
 	// Create pool for goroutines
-	poolSize := 1000
+	poolSize := 100
 	for i := 0; i < poolSize; i++ {
 		go worker(taskQueue, i, requestURL, &wg)
 	}
 	for {
 		startTime := time.Now()
 		// Generate tasks and send them to taskQueue
-		for i := 0; i < numRequests; i ++ {
+		numRequestsEachReplica := numRequests/numReplicas
+		fmt.Println("numRequests each replica: ", numRequestsEachReplica)
+		for i := 0; i < numRequestsEachReplica; i ++ {
 			task := Task{ID: i, Num: i + 1}
 			taskQueue <- task 
 			wg.Add(1)
@@ -155,7 +168,7 @@ func main() {
 		loadtestSeconds := loadtestDuration.Seconds()
 		timeSleep := 0.0
 		if loadtestSeconds < 60.0 {
-			timeSleep = 10.0 - loadtestSeconds
+			timeSleep = 60.0 - loadtestSeconds
 		}
 		appLoadtestResponseDurationAll.Set(loadtestSeconds)
 		fmt.Println("loadtestSeconds: ", loadtestSeconds)
@@ -197,5 +210,7 @@ func processTask(task Task, pool int, requestURL string) {
 	responseDurationEachRequest.Set(loadtestSecondsEachRequest)
 
 	// Increment the requests counter
+	mutex.Lock()
 	totalRequestsProcessed.Inc()
+	mutex.Unlock()
 }

@@ -42,9 +42,9 @@ variable "eks_cluster_name" {
 variable "node_groups" {
   type = any
   default = {
-    on_demand = {
+    spot = {
       disk_size        = 20
-      instance_types   = ["m5.4xlarge", "m5a.4xlarge"]
+      instance_types   = ["m5.2xlarge", "m5a.2xlarge", "m6a.2xlarge"]
       capacity_type    = "SPOT"
       desired_capacity = 1
       max_size         = 3

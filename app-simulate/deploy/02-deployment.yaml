@@ -10,7 +10,7 @@ metadata:
     prometheus.io/port: "15020"
     prometheus.io/scrape: "true"
 spec:
-  replicas: 3
+  replicas: 4
   selector:
     matchLabels:
       app: app-simulate
@@ -23,6 +23,16 @@ spec:
         prometheus.io/port: "15020"
         prometheus.io/scrape: "true"
     spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - app-simulate
+            topologyKey: "kubernetes.io/hostname"
       containers:
       - name: app-simulate
         image: 832438989008.dkr.ecr.ap-southeast-1.amazonaws.com/app-simulate@sha256:593a9d2443ac0b2bd8111202baab0c66b6acef0116d167ae1b6777173a5e27bd

@@ -23,9 +23,19 @@ spec:
         prometheus.io/port: "15020"
         prometheus.io/scrape: "true"
     spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - app-loadtest
+            topologyKey: "kubernetes.io/hostname"
       containers:
       - name: app-loadtest
-        image: 832438989008.dkr.ecr.ap-southeast-1.amazonaws.com/app-loadtest@sha256:de27fc2d6502c7c7b836b8bda557be404e628c09327f37660e5e8d5603c4ccd9
+        image: 832438989008.dkr.ecr.ap-southeast-1.amazonaws.com/app-loadtest@sha256:7ae3c0d1436c21fabbea6af8a2615ba1cd80fcbfc724ae2cf72bc8bc41fcf6a5
         ports:
         - name: prometheus
           containerPort: 8000
