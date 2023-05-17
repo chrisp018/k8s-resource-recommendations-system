@@ -132,9 +132,9 @@ func main(){
 	bytesResponseEachRequest := strconv.Itoa(numBytes/numRequests)
 	queryParams := url.Values{}
 	queryParams.Set("num_bytes", bytesResponseEachRequest)
-	requestURL := fmt.Sprintf("http://app-simulate.app-simulate.svc.cluster.local:5000/bytes?%s", queryParams.Encode())
+	// requestURL := fmt.Sprintf("http://app-simulate.app-simulate.svc.cluster.local:5000/bytes?%s", queryParams.Encode())
 	// requestURL := fmt.Sprintf("http://localhost:5000/bytes?%s", queryParams.Encode())
-	// requestURL := fmt.Sprintf("http://google.com")
+	requestURL := fmt.Sprintf("http://google.com")
 	fmt.Println("DATA INPUT: ")
 	fmt.Println("Bytes response each request: ", bytesResponseEachRequest)
 	fmt.Println("Number of request per minutes: ", numRequests)
@@ -150,7 +150,7 @@ func main(){
 	time.Sleep(time.Duration(nanoseconds) * time.Nanosecond)
 
 	// Create pool for goroutines
-	poolSize := 1000
+	poolSize := 100
 	for i := 0; i < poolSize; i++ {
 		go worker(taskQueue, i, requestURL, &wg)
 	}
@@ -158,9 +158,8 @@ func main(){
 		startTimeRequest := time.Now()
 		// Generate tasks and send them to taskQueue
 		numRequestsEachReplica := numRequests/numReplicas
-		fmt.Println("START:===============================")
 		fmt.Println("numRequests each replica: ", numRequestsEachReplica)
-		time.Sleep(10000 * time.Millisecond)
+		fmt.Println("START:===============================")
 		for i := 0; i < numRequestsEachReplica; i ++ {
 			task := Task{ID: i}
 			taskQueue <- task 
@@ -209,7 +208,6 @@ func processTask(task Task, pool int, requestURL string) {
 		responseSize.Observe(float64(numBytes))
 		successRequestsCount.Inc()
 	}
-	// time.Sleep(100 * time.Millisecond)
 	endTimeEachRequest := time.Now()
 	loadtestDurationEachRequest := endTimeEachRequest.Sub(startTimeEachRequest)
 	loadtestSecondsEachRequest := loadtestDurationEachRequest.Seconds()

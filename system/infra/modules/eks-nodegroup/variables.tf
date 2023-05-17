@@ -23,12 +23,13 @@ variable "node_groups" {
   type = any
   default = {
     on_demand = {
-      disk_size        = 20
-      instance_types   = ["t2.medium", "t3.medium", "t3a.medium"]
-      capacity_type    = "SPOT"
-      desired_capacity = 1
-      max_size         = 3
-      min_size         = 1
+      disk_size         = 20
+      instance_types    = ["t2.medium", "t3.medium", "t3a.medium"]
+      capacity_type     = "SPOT"
+      desired_capacity  = 1
+      max_size          = 3
+      min_size          = 1
+      kubernetes_taints = []
     }
   }
 }
