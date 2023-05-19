@@ -33,9 +33,16 @@ spec:
                 values:
                 - app-loadtest
             topologyKey: "kubernetes.io/hostname"
+      tolerations:
+      - key: "node-group"
+        operator: "Equal"
+        value: "request"
+        effect: "NoExecute"
+      nodeSelector:
+        eks.amazonaws.com/nodegroup: app-request
       containers:
       - name: app-loadtest
-        image: 832438989008.dkr.ecr.ap-southeast-1.amazonaws.com/app-loadtest@sha256:7ae3c0d1436c21fabbea6af8a2615ba1cd80fcbfc724ae2cf72bc8bc41fcf6a5
+        image: 832438989008.dkr.ecr.ap-southeast-1.amazonaws.com/app-loadtest@sha256:05f059352185538396bd6f4056dca78070ca17c646d5069d04e9cb9e45098918
         ports:
         - name: prometheus
           containerPort: 8000

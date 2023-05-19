@@ -42,22 +42,43 @@ variable "eks_cluster_name" {
 variable "node_groups" {
   type = any
   default = {
-    spot = {
+    app = {
       disk_size        = 20
       instance_types   = ["m5.2xlarge", "m5a.2xlarge", "m6a.2xlarge"]
       capacity_type    = "SPOT"
       desired_capacity = 1
       max_size         = 3
       min_size         = 1
+      kubernetes_taints = [{
+        key    = "node-group"
+        value  = "app"
+        effect = "NO_EXECUTE"
+      }]
     }
-    # system = {
-    #   disk_size        = 20
-    #   instance_types   = ["m5.2xlarge", "m5a.2xlarge"]
-    #   capacity_type    = "SPOT"
-    #   desired_capacity = 1
-    #   max_size         = 3
-    #   min_size         = 1
-    # }
+    request = {
+      disk_size        = 20
+      instance_types   = ["m5.2xlarge", "m5a.2xlarge", "m6a.2xlarge"]
+      capacity_type    = "SPOT"
+      desired_capacity = 1
+      max_size         = 3
+      min_size         = 1
+      kubernetes_taints = [
+        {
+          key    = "node-group"
+          value  = "request"
+          effect = "NO_EXECUTE"
+        }
+      ]
+    }
+    system = {
+      disk_size         = 20
+      instance_types    = ["t3.medium", "t3a.medium"]
+      capacity_type     = "SPOT"
+      desired_capacity  = 1
+      max_size          = 3
+      min_size          = 1
+      kubernetes_taints = []
+    }
   }
 }
 

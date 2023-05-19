@@ -16,6 +16,15 @@ resource "aws_eks_node_group" "this" {
   instance_types = each.value.instance_types
   capacity_type  = each.value.capacity_type
   version        = var.kubernetes_version
+  dynamic "taint" {
+    for_each = each.value.kubernetes_taints
+
+    content {
+      key    = taint.value["key"]
+      value  = taint.value["value"]
+      effect = taint.value["effect"]
+    }
+  }
   dynamic "launch_template" {
     for_each = [each.key]
     content {
