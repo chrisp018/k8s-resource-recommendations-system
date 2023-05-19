@@ -10,7 +10,7 @@ metadata:
     prometheus.io/port: "15020"
     prometheus.io/scrape: "true"
 spec:
-  replicas: 1
+  replicas: 5
   selector:
     matchLabels:
       app: app-simulate
@@ -25,14 +25,24 @@ spec:
     spec:
       affinity:
         podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - app-simulate
-            topologyKey: "kubernetes.io/hostname"
+          # requiredDuringSchedulingIgnoredDuringExecution:
+          # - labelSelector:
+          #     matchExpressions:
+          #     - key: app
+          #       operator: In
+          #       values:
+          #       - app-simulate
+          #   topologyKey: "kubernetes.io/hostname"
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - app-simulate
+              topologyKey: "kubernetes.io/hostname"
       tolerations:
       - key: "node-group"
         operator: "Equal"
@@ -42,7 +52,7 @@ spec:
         eks.amazonaws.com/nodegroup: app-app
       containers:
       - name: app-simulate
-        image: 832438989008.dkr.ecr.ap-southeast-1.amazonaws.com/app-simulate@sha256:593a9d2443ac0b2bd8111202baab0c66b6acef0116d167ae1b6777173a5e27bd
+        image: 832438989008.dkr.ecr.ap-southeast-1.amazonaws.com/app-simulate@sha256:356a89952000d42f3229dd40b1622fdeab922cdca7f3c3079ddfac29129a8ae4
         ports:
         - containerPort: 5000
         livenessProbe:

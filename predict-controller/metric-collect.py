@@ -49,8 +49,10 @@ def get_metrics(start_time, end_time, step):
 
 
 format_str = "%Y-%m-%d %H:%M:%S"
-start_time = parse_datetime("9minutes")
-end_time = parse_datetime("now")
+# start_time = parse_datetime("9minutes")
+start_time = strftime("%Y-%m-%d %H:%M:%S", timestamp(time()) - 9m)
+end_time = strftime("%Y-%m-%d %H:%M:%S", timestamp(time()) - mod(timestamp(time()), 60))
+# end_time = parse_datetime("now")
 print(end_time)
 step = "1m"
 rs = get_metrics(start_time, end_time, step)
