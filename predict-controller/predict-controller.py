@@ -56,6 +56,7 @@ prom = PrometheusConnect(url="http://prometheus.khanh-thesis.online", disable_ss
 
 
 def get_metrics(start_time, end_time, step):
+    print("start_time: ", type(start_time))
     metric_data_request_count = prom.custom_query_range(
         query='sum(rate(istio_requests_total{source_app="request-simulate", destination_app="app-simulate", response_code="200", connection_security_policy="unknown", job="envoy-stats"}[1m])) * 50',
         start_time=start_time,
@@ -68,7 +69,6 @@ def get_metrics(start_time, end_time, step):
         end_time=end_time,
         step=step,
     )
-
     if len(metric_data_request_count) == 0:
         return pd.DataFrame()
     if len(metric_data_request_count[0].get("values")) != 10:
@@ -99,22 +99,34 @@ def predict_values(time_series, scaler_eventcount, scaler):
     predicted_value = scaler_eventcount.inverse_transform(predicted_value)
     return predicted_value
 
-
+# calib time 
+calib_current_time = datetime.now()
+calib_next_minute = calib_current_time.replace(second=0, microsecond=0) + timedelta(minutes=1)
+calib_delta_time = (calib_next_minute - calib_current_time).total_seconds() + 1
+print("delta_time :", int(calib_delta_time))
+time.sleep(calib_delta_time)
 while True:
-    start_time = parse_datetime("9minutes")
-    end_time = parse_datetime("now")
+    # predict
+    now = datetime.now()
+    start_time = (now - timedelta(minutes=9)).strftime("%Y-%m-%d %H:%M:00")
+    start_time = datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
+    end_time = now.strftime("%Y-%m-%d %H:%M:00")
+    end_time = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
     step = "1m"
     rs = get_metrics(start_time, end_time, step)
     if not rs.empty:
-        rs['timestamp'] = pd.to_datetime(rs['timestamp'], unit='s').apply(lambda x: x + timedelta(minutes=1) - timedelta(seconds=x.second))
-        rs['timestamp'] = rs['timestamp'] - time_offset
+        rs['timestamp'] = pd.to_datetime(rs['timestamp'], unit='s')
+        # minus 1 minutes because prometheus read data the data is in the past
+        rs['timestamp'] = rs['timestamp'] - time_offset - timedelta(minutes=1)
         merged_df = pd.merge(wc_dataset, rs, left_on='event_time', right_on='timestamp', how='right')
         merged_df['num_match_event'] = merged_df['num_match_event'].fillna(0) # fill missing values with 0
         merged_df = merged_df.reindex(columns=['timestamp', 'request_count', 'sum_bytes', 'num_match_event'])
         merged_df = merged_df.drop('timestamp', axis=1)
-
         predicted_value = predict_values(merged_df, scaler_eventcount, scaler)
         print(int(predicted_value[0][0]))
         predicted_prometheus.set(int(predicted_value[0][0]))
-
-    time.sleep(60)
+    predict_end_time = datetime.now()
+    predict_next_minute = predict_end_time.replace(second=0, microsecond=0) + timedelta(minutes=1)
+    predict_delta_time= (predict_next_minute - predict_end_time).total_seconds() + 1
+    print("delta_time :", int(predict_delta_time))
+    time.sleep(predict_delta_time)

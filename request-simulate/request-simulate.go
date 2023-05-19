@@ -15,6 +15,9 @@ import (
 	// "github.com/go-gota/gota/series"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+    "github.com/aws/aws-sdk-go/aws"
+    "github.com/aws/aws-sdk-go/aws/session"
+    "github.com/aws/aws-sdk-go/service/ssm"
 )
 
 type Task struct {
@@ -55,7 +58,20 @@ var (
 	})
 )
 
+var (
+	sess *session.Session
+	ssmClient  *ssm.SSM
+)
+
 func init() {
+	region := "ap-southeast-1"
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String(region),
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	ssmClient = ssm.New(sess)
 	prometheus.MustRegister(
 		totalRequestsProcessed,
 		successRequestsCount,
@@ -66,7 +82,39 @@ func init() {
 	)
 }
 
+func getSSMParam(parameterName string) (string, error){
+	input := &ssm.GetParameterInput{
+		Name: aws.String(parameterName),
+		WithDecryption: aws.Bool(true),
+	}
+	result, err := ssmClient.GetParameter(input)
+	if err != nil {
+		return "", fmt.Errorf("failed to retrieve parameter: %v", err)
+	}
+	return *result.Parameter.Value, nil
+}
+
+func putSSMParam(parameterName string, currentTriggerTime string) (error){
+	input := &ssm.PutParameterInput{
+		Name:      aws.String(parameterName),
+		Value:     aws.String(currentTriggerTime),
+		Type:      aws.String("String"),
+		Overwrite: aws.Bool(true),
+	}
+	_, err := ssmClient.PutParameter(input)
+	if err != nil {
+		return fmt.Errorf("failed to put parameter: %v", err)
+	}
+	return nil
+}
+
 func main(){
+	pastTriggerTime, _ := getSSMParam("/khanh-thesis/past_trigger_time")
+	pastTriggerTimeParse, err := time.Parse("2006-01-02 15:04:00", pastTriggerTime)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("pastTriggerTime: ", pastTriggerTimeParse)
 	// temp data
 	numReplicas := 1
 	taskQueue := make(chan Task, 1000)
@@ -75,10 +123,9 @@ func main(){
 	defer file.Close()
 	df := dataframe.ReadCSV(file)
 	queryParams := url.Values{}
+	eventTime := df.Col("event_time")
 	eventCount := df.Col("event_count")
 	sumBytes := df.Col("sum_bytes")
-	fmt.Printf("Type of eventCount: %T\n", eventCount)
-	fmt.Printf("Type of sumBytes: %T\n", sumBytes)
 
 	// Start the HTTP server to expose metrics
 	go func() {
@@ -94,45 +141,51 @@ func main(){
 	fmt.Println("duration :", duration)
 	nanoseconds := duration.Nanoseconds()
 	time.Sleep(time.Duration(nanoseconds) * time.Nanosecond)
-
+	// SSM Trigger time
+	triggerTime := time.Now()
+	currentTriggerTime := triggerTime.Format("2006-01-02 15:04:00")
+	fmt.Println("currentTriggerTime (ssm): ", currentTriggerTime)
+	putSSMParam("/khanh-thesis/current_trigger_time", currentTriggerTime)
 	poolSize := 1000
 	for i := 0; i < poolSize; i++ {
 		go worker(taskQueue, i, &wg)
 	}
 	for i := 0; i < df.Nrow(); i++ {
-		startTimeRequest := time.Now()
-		fmt.Println("START:===============================")
-		fmt.Println("DATA INPUT: ")
-		numRequests, _ := strconv.Atoi(eventCount.Elem(i).String())
-		numBytes, _ := strconv.Atoi(sumBytes.Elem(i).String())
-		numRequestsEachReplica := numRequests/numReplicas
-		bytesResponseEachRequest := strconv.Itoa(numBytes/numRequests)
-		fmt.Println("Number of request per minutes: ", numRequests)
-		fmt.Println("Bytes response all requests: ", numBytes)
-		fmt.Println("Bytes response each request: ", bytesResponseEachRequest)
-		fmt.Println("START SENDING REQUEST: ")
-		queryParams.Set("num_bytes", bytesResponseEachRequest)
-		requestURL := fmt.Sprintf("http://app-simulate.app-simulate.svc.cluster.local:5000/bytes?%s", queryParams.Encode())
-		requestURL = "http://google.com"
-		time.Sleep(10000 * time.Millisecond)
-		for i := 0; i < numRequestsEachReplica; i ++ {
-			task := Task{ID: i, RequestURL: requestURL}
-			taskQueue <- task
-			wg.Add(1)
+		eventTime, _ := time.Parse("2006-01-02 15:04:05", eventTime.Elem(i).String())
+		if !eventTime.Before(pastTriggerTimeParse) {
+			startTimeRequest := time.Now()
+			fmt.Println("START:===============================")
+			fmt.Println("DATA INPUT: ")
+			numRequests, _ := strconv.Atoi(eventCount.Elem(i).String())
+			numBytes, _ := strconv.Atoi(sumBytes.Elem(i).String())
+			numRequestsEachReplica := numRequests/numReplicas
+			bytesResponseEachRequest := strconv.Itoa(numBytes/numRequests)
+			fmt.Println("Number of request per minutes: ", numRequests)
+			fmt.Println("Bytes response all requests: ", numBytes)
+			fmt.Println("Bytes response each request: ", bytesResponseEachRequest)
+			fmt.Println("START SENDING REQUEST: ")
+			queryParams.Set("num_bytes", bytesResponseEachRequest)
+			requestURL := fmt.Sprintf("http://app-simulate.app-simulate.svc.cluster.local:5000/bytes?%s", queryParams.Encode())
+			time.Sleep(10000 * time.Millisecond)
+			for i := 0; i < numRequestsEachReplica; i ++ {
+				task := Task{ID: i, RequestURL: requestURL}
+				taskQueue <- task
+				wg.Add(1)
+			}
+			currentTime := time.Now()
+			nextMinute  := currentTime.Truncate(time.Minute).Add(time.Minute)
+			duration := nextMinute.Sub(currentTime)
+			nanoseconds := duration.Nanoseconds()
+			fmt.Println("Need to sleep :", duration)
+			time.Sleep(time.Duration(nanoseconds) * time.Nanosecond)
+			fmt.Println("END:===============================")
+			wg.Wait()
+			endTimeRequest := time.Now()
+			loadtestDuration := endTimeRequest.Sub(startTimeRequest)
+			loadtestSeconds := loadtestDuration.Seconds()
+			appLoadtestResponseDurationAll.Set(loadtestSeconds)
+			fmt.Println("loadtestSeconds: ", loadtestSeconds)
 		}
-		currentTime := time.Now()
-		nextMinute  := currentTime.Truncate(time.Minute).Add(time.Minute)
-		duration := nextMinute.Sub(currentTime)
-		nanoseconds := duration.Nanoseconds()
-		fmt.Println("Need to sleep :", duration)
-		time.Sleep(time.Duration(nanoseconds) * time.Nanosecond)
-		fmt.Println("END:===============================")
-		wg.Wait()
-		endTimeRequest := time.Now()
-		loadtestDuration := endTimeRequest.Sub(startTimeRequest)
-		loadtestSeconds := loadtestDuration.Seconds()
-		appLoadtestResponseDurationAll.Set(loadtestSeconds)
-		fmt.Println("loadtestSeconds: ", loadtestSeconds)
 	}
 }
 
@@ -160,7 +213,7 @@ func processTask(task Task, pool int) {
 	endTimeEachRequest := time.Now()
 	loadtestDurationEachRequest := endTimeEachRequest.Sub(startTimeEachRequest)
 	loadtestSecondsEachRequest := loadtestDurationEachRequest.Seconds()
-	fmt.Println("load test in seconds each request: ", loadtestSecondsEachRequest)
+	// fmt.Println("load test in seconds each request: ", loadtestSecondsEachRequest)
 	responseDurationEachRequest.Set(loadtestSecondsEachRequest)
 	totalRequestsProcessed.Inc()
 }

@@ -51,7 +51,7 @@ data:
         action: keep
         regex: '.*-envoy-prom'
     - job_name: request-simulate
-      metrics_path: /stats/prometheus
+      metrics_path: /metrics
       kubernetes_sd_configs:
       - role: endpoints
       relabel_configs:
