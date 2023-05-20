@@ -52,6 +52,11 @@ var (
 		Name: "app_loadtest_response_duration_all",
 		Help: "Duration of HTTP app load test response all requests received",
 	})
+
+	appLoadtestResponseDurationAllValidate = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "app_loadtest_response_duration_all_validate",
+		Help: "Duration of HTTP app load test response all requests received make sure within 60 seconds",
+	})
 )
 
 var (
@@ -77,6 +82,7 @@ func init() {
 		responseSize,
 		responseDurationEachRequest,
 		appLoadtestResponseDurationAll,
+		appLoadtestResponseDurationAllValidate,
 	)
 }
 
@@ -173,6 +179,7 @@ func main(){
 		duration := nextMinute.Sub(currentTime)
 		fmt.Println("duration :", duration)
 		nanoseconds := duration.Nanoseconds()
+		appLoadtestResponseDurationAll.Set(duration.Seconds())
 		time.Sleep(time.Duration(nanoseconds) * time.Nanosecond)
 		fmt.Println("nanoseconds :", nanoseconds)
 		fmt.Println("END:===============================")
@@ -181,7 +188,7 @@ func main(){
 		endTimeRequest := time.Now()
 		loadtestDuration := endTimeRequest.Sub(startTimeRequest)
 		loadtestSeconds := loadtestDuration.Seconds()
-		appLoadtestResponseDurationAll.Set(loadtestSeconds)
+		appLoadtestResponseDurationAllValidate.Set(loadtestSeconds)
 		fmt.Println("loadtestSeconds: ", loadtestSeconds)
 	}
 }
