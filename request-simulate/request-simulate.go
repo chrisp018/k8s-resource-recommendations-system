@@ -110,13 +110,15 @@ func putSSMParam(parameterName string, currentTriggerTime string) (error){
 
 func main(){
 	pastTriggerTime, _ := getSSMParam("/khanh-thesis/past_trigger_time")
+	replicasCount, _ := getSSMParam("/khanh-thesis/request_simulate_replicas")
+	numReplicas, _ := strconv.Atoi(replicasCount)
 	pastTriggerTimeParse, err := time.Parse("2006-01-02 15:04:00", pastTriggerTime)
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("pastTriggerTime: ", pastTriggerTimeParse)
+	fmt.Println("numReplicas: ", numReplicas)
 	// temp data
-	numReplicas := 1
 	taskQueue := make(chan Task, 1000)
 	var wg sync.WaitGroup
 	file, _ := os.Open("wc_dataset_processed.csv")
