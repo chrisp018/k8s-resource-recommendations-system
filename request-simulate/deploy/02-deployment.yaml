@@ -25,7 +25,7 @@ spec:
     spec:
       containers:
       - name: request-simulate
-        image: 832438989008.dkr.ecr.ap-southeast-1.amazonaws.com/request-simulate@sha256:4962452cca06c7023978afbee520ce58632c7114724d11de7f3e7d0f58e548ce
+        image: 832438989008.dkr.ecr.ap-southeast-1.amazonaws.com/request-simulate@sha256:f0cef44a3abd5611056321b81cb2ccea44e2a7df9c5deb7db3c58947872fe7ef
         ports:
         - name: prometheus
           containerPort: 8000

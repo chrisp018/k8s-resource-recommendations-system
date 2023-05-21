@@ -10,7 +10,7 @@ metadata:
     prometheus.io/port: "15020"
     prometheus.io/scrape: "true"
 spec:
-  replicas: 4
+  replicas: 1
   selector:
     matchLabels:
       app: app-loadtest
@@ -42,7 +42,7 @@ spec:
         eks.amazonaws.com/nodegroup: app-request
       containers:
       - name: app-loadtest
-        image: 832438989008.dkr.ecr.ap-southeast-1.amazonaws.com/app-loadtest@sha256:05f059352185538396bd6f4056dca78070ca17c646d5069d04e9cb9e45098918
+        image: 832438989008.dkr.ecr.ap-southeast-1.amazonaws.com/app-loadtest@sha256:53062f98a26ea199df8f027c9ea6baa9f12641f55a2628bf68a4049dd78aa51c
         ports:
         - name: prometheus
           containerPort: 8000
