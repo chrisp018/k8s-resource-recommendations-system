@@ -1,4 +1,5 @@
 import os
+import io
 import csv
 import requests
 import time
@@ -22,6 +23,7 @@ start_http_server(8000)
 
 
 ssm = boto3.client('ssm', region_name=region)
+s3 = boto3.client('s3', region_name = region)
 
 time.sleep(10)
 
@@ -43,7 +45,11 @@ logger.info("Uploaded current time to SSM: /khanh-thesis/current_trigger_time")
 
 
 endpoint = 'http://app-simulate.app-simulate.svc.cluster.local:5000/bytes'
-df = pd.read_csv('wc_dataset_processed.csv')
+# df = pd.read_csv('wc_dataset_processed.csv')
+BUCKET_NAME="khanh-thesis-validation"
+KEY="dataset-validation/wc_dataset_processed.csv"
+obj = s3.get_object(Bucket= BUCKET_NAME , Key = KEY)
+df = pd.read_csv(io.BytesIO(obj['Body'].read()), encoding='utf8')
 df['event_time'] = pd.to_datetime(df['event_time'])
 df.set_index('event_time', inplace=True)
 trigger_time = pd.to_datetime(past_trigger_time)

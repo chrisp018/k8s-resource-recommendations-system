@@ -3,7 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
+	// "os"
+	"strings"
 	"sync"
 	"time"
 	"io/ioutil"
@@ -18,6 +19,12 @@ import (
     "github.com/aws/aws-sdk-go/aws"
     "github.com/aws/aws-sdk-go/aws/session"
     "github.com/aws/aws-sdk-go/service/ssm"
+	"github.com/aws/aws-sdk-go/service/s3"
+)
+
+const (
+	BucketName = "khanh-thesis-validation"
+	Key        = "dataset-validation/wc_dataset_processed.csv"
 )
 
 type Task struct {
@@ -61,6 +68,7 @@ var (
 var (
 	sess *session.Session
 	ssmClient  *ssm.SSM
+	s3Client *s3.S3
 )
 
 func init() {
@@ -72,6 +80,7 @@ func init() {
 		log.Fatal(err)
 	}
 	ssmClient = ssm.New(sess)
+	s3Client = s3.New(sess)
 	prometheus.MustRegister(
 		totalRequestsProcessed,
 		successRequestsCount,
@@ -121,9 +130,28 @@ func main(){
 	// temp data
 	taskQueue := make(chan Task, 1000)
 	var wg sync.WaitGroup
-	file, _ := os.Open("wc_dataset_processed.csv")
-	defer file.Close()
-	df := dataframe.ReadCSV(file)
+	// file, _ := os.Open("wc_dataset_processed.csv")
+	// defer file.Close()
+
+	// Prepare the input parameters for the S3 getObject operation
+	input := &s3.GetObjectInput{
+		Bucket: aws.String(BucketName),
+		Key:    aws.String(Key),
+	}
+	// Perform the S3 getObject operation
+	result, err := s3Client.GetObject(input)
+	if err != nil {
+		log.Fatal("Failed to get S3 object:", err)
+	}
+	// Read the object body into a byte array
+	body, err := ioutil.ReadAll(result.Body)
+	if err != nil {
+		log.Fatal("Failed to read object body:", err)
+	}
+	csvString := string(body)
+	reader := strings.NewReader(csvString)
+
+	df := dataframe.ReadCSV(reader)
 	queryParams := url.Values{}
 	eventTime := df.Col("event_time")
 	eventCount := df.Col("event_count")

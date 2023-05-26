@@ -28,4 +28,3 @@ spec:
       stabilizationWindowSeconds: 300
     scaleUp:
       stabilizationWindowSeconds: 0
-

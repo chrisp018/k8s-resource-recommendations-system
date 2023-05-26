@@ -114,6 +114,11 @@ resource "aws_iam_role_policy_attachment" "AmazonSSMFullAccess" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMFullAccess"
 }
 
+resource "aws_iam_role_policy_attachment" "AmazonS3FullAccess" {
+  role       = aws_iam_role.this.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+}
+
 resource "aws_iam_role_policy_attachment" "Route53" {
   role       = aws_iam_role.this.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonRoute53FullAccess"
