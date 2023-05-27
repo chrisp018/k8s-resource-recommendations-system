@@ -43,7 +43,10 @@ hpa_target_value = ssm.get_parameter(
     Name='/khanh-thesis/hpa_target_value',
     WithDecryption=True
 )
-
+predicted_value_offset = ssm.get_parameter(
+    Name='/khanh-thesis/predicted_value_offset',
+    WithDecryption=True
+)
 
 def prediction_mode():
     response_enabled_predict_controller = ssm.get_parameter(
@@ -57,8 +60,10 @@ def prediction_mode():
 past_trigger_time = response_past_trigger['Parameter']['Value']
 current_trigger_time = response_current_trigger['Parameter']['Value']
 hpa_target_value = int(hpa_target_value['Parameter']['Value'])
+predicted_value_offset = int(predicted_value_offset['Parameter']['Value'])
 print("past_trigger_time: ", past_trigger_time)
 print("current_trigger_time: ", current_trigger_time)
+print("predicted_value_offset: ", predicted_value_offset)
 
 past_datetime = datetime.strptime(past_trigger_time, '%Y-%m-%d %H:%M:%S')
 current_datetime = datetime.strptime(current_trigger_time, '%Y-%m-%d %H:%M:%S')
@@ -169,6 +174,15 @@ while True:
         #   3: combine predict and current (new approach)
         if prediction_mode() == 2:
             if not rs.empty:
+                # traditional
+                time_startup = datetime.now()
+                time_startup = time_startup.replace(second=0, microsecond=0)
+                unix_timestamp = int(time_startup.timestamp())
+                rs_traditional = get_current_metric(unix_timestamp)
+                print("use real data for prediction: ", rs_traditional[0].get('value')[1])
+                rs_traditional_float = float(rs_traditional[0].get('value')[1])
+                rs_traditional_int = int(rs_traditional_float)
+
                 rs['timestamp'] = pd.to_datetime(rs['timestamp'], unit='s')
                 # minus 1 minutes because prometheus read data the data is in the past
                 rs['timestamp'] = rs['timestamp'] - time_offset - timedelta(minutes=1)
@@ -177,8 +191,10 @@ while True:
                 merged_df = merged_df.reindex(columns=['timestamp', 'request_count', 'sum_bytes', 'num_match_event'])
                 merged_df = merged_df.drop('timestamp', axis=1)
                 predicted_value = predict_values(merged_df, scaler_eventcount, scaler)
-                print(int(predicted_value[0][0]))
-                predicted_prometheus.set(int(predicted_value[0][0]))
+                predicted_value_int = int(predicted_value[0][0])
+                if predicted_value_int < rs_traditional_int:
+                    predicted_value_int = predicted_value_int + predicted_value_offset
+                predicted_prometheus.set(predicted_value_int)
                 predicted_prometheus_prediction_mode.set(2)
                 predicted_prometheus_use_future_value.set(2)
             else:
@@ -205,7 +221,8 @@ while True:
             merged_df = merged_df.drop('timestamp', axis=1)
             predicted_value = predict_values(merged_df, scaler_eventcount, scaler)
             predicted_value_int = int(predicted_value[0][0])
-
+            if predicted_value_int < rs_traditional_int:
+                predicted_value_int = predicted_value_int + predicted_value_offset
             # combine
             # scale up
             num_current_replicas = get_app_current_replicas()
@@ -217,7 +234,7 @@ while True:
                 predicted_prometheus.set(predicted_value_int)
             elif predicted_value_int < rs_traditional_int and rs_traditional_int >= hpa_target_value*num_current_replicas:
                 predicted_prometheus_use_future_value.set(1)
-                predicted_prometheus.set(predicted_value_int)
+                predicted_prometheus.set(rs_traditional_int)
             else:
                 predicted_prometheus_use_future_value.set(2)
                 predicted_prometheus.set(predicted_value_int)
