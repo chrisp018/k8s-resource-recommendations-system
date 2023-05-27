@@ -46,9 +46,9 @@ variable "node_groups" {
       disk_size        = 20
       instance_types   = ["m5.2xlarge", "m5a.2xlarge", "m6a.2xlarge"]
       capacity_type    = "SPOT"
-      desired_capacity = 1
+      desired_capacity = 2
       max_size         = 3
-      min_size         = 1
+      min_size         = 2
       kubernetes_taints = [{
         key    = "node-group"
         value  = "app"
@@ -59,9 +59,9 @@ variable "node_groups" {
       disk_size        = 20
       instance_types   = ["m5.2xlarge", "m5a.2xlarge", "m6a.2xlarge"]
       capacity_type    = "SPOT"
-      desired_capacity = 1
+      desired_capacity = 2
       max_size         = 3
-      min_size         = 1
+      min_size         = 2
       kubernetes_taints = [
         {
           key    = "node-group"
