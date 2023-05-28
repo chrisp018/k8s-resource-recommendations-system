@@ -72,7 +72,7 @@ variable "node_groups" {
     }
     system = {
       disk_size         = 20
-      instance_types    = ["t3.medium", "t3a.medium"]
+      instance_types    = ["m5.2xlarge", "m5a.2xlarge", "m6a.2xlarge"] #["t3.medium", "t3a.medium"]
       capacity_type     = "SPOT"
       desired_capacity  = 1
       max_size          = 3

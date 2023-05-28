@@ -226,20 +226,13 @@ while True:
             # combine
             # scale up
             num_current_replicas = get_app_current_replicas()
-            if predicted_value_int >= rs_traditional_int and predicted_value_int >= hpa_target_value*num_current_replicas:
+            if predicted_value_int >= rs_traditional_int:
                 predicted_prometheus_use_future_value.set(2)
                 predicted_prometheus.set(predicted_value_int)
-            elif predicted_value_int >= rs_traditional_int and rs_traditional_int < hpa_target_value*num_current_replicas: # scale down uu tien gia tri cao
-                predicted_prometheus_use_future_value.set(2)
-                predicted_prometheus.set(predicted_value_int)
-            elif predicted_value_int < rs_traditional_int and rs_traditional_int >= hpa_target_value*num_current_replicas:
+            else:
                 predicted_prometheus_use_future_value.set(1)
                 predicted_prometheus.set(rs_traditional_int)
-            else:
-                predicted_prometheus_use_future_value.set(2)
-                predicted_prometheus.set(predicted_value_int)
             predicted_prometheus_prediction_mode.set(3)
-
 
         elif prediction_mode() == 1:
             time_startup = datetime.now()
