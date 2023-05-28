@@ -22,6 +22,9 @@ scaler = load('./model/scaler-bi-lstm.joblib')
 
 # Create a new Gauge metric named "my_gauge" with a help message
 predicted_prometheus = Gauge('predicted_prometheus', 'This is predicted_prometheus metric')
+predicted_prometheus_tolerate = Gauge('predicted_prometheus_tolerate', 'This is predicted_prometheus_tolerate metric')
+predicted_prometheus_use_tolerate = Gauge('predicted_prometheus_use_tolerate', 'This is predicted_prometheus_use_tolerate metric')
+
 predicted_prometheus_use_future_value = Gauge('predicted_prometheus_use_future_value', 'This is predicted_prometheus metric which illustrate using current value or not')
 predicted_prometheus_prediction_mode = Gauge('predicted_prometheus_prediction_mode', 'This is predicted_prometheus metric which illustrate using traditional or prediction value or combine')
 start_http_server(8000)
@@ -121,6 +124,28 @@ def get_current_metric(unix_timestamp):
         )
     return rs
 
+
+def tolerate_handler(predict_value, current_num_replicas, target_value=10000, tolerate=10):
+    if predict_value > target_value*current_num_replicas:
+        percent_diff = 100*abs(predict_value/current_num_replicas - target_value)/target_value
+        if percent_diff < tolerate:
+            percent_require = tolerate - percent_diff 
+            num_require_add = percent_require*0.01*current_num_replicas*target_value
+            predict_require_trigger_scaleup = predict_value + num_require_add
+            return { 
+                "predict_require_trigger_scaleup": predict_require_trigger_scaleup,
+                "predict_require_add_more_trigger_scaleup": num_require_add,
+                "percent_diff": percent_diff,
+                "use_predict_tolerate": 2
+            }
+    return {
+        "predict_require_trigger_scaleup": predict_value,
+        "predict_require_add_more_trigger_scaleup": 0,
+        "percent_diff": 0,
+        "use_predict_tolerate": 1
+    }
+
+
 def predict_values(time_series, scaler_eventcount, scaler):
     time_series[['sum_bytes', 'num_match_event']] = scaler.transform(time_series[['sum_bytes', 'num_match_event']])
     time_series[['request_count']] = scaler_eventcount.transform(time_series[['request_count']])
@@ -162,6 +187,13 @@ while True:
         print("use real data for prediction: ", rs[0].get('value')[1])
         predicted_prometheus_use_future_value.set(1)
         rs_float = float(rs[0].get('value')[1])
+        
+        # num_current_replicas = get_app_current_replicas()
+        # tl_handler = tolerate_handler(int(rs_float), num_current_replicas)
+        # predicted_prometheus_tolerate.set(tl_handler.get("predict_require_trigger_scaleup"))
+        # predicted_prometheus_use_tolerate.set(tl_handler.get("use_predict_tolerate"))
+        predicted_prometheus_tolerate.set(int(rs_float))
+        predicted_prometheus_use_tolerate.set(0)
         predicted_prometheus.set(int(rs_float))
     else:
         # Mot metric predict_controller_use_predict_data chi ra dang dung gia tri hien tai hay gia tri du doan 
@@ -193,7 +225,13 @@ while True:
                 predicted_value = predict_values(merged_df, scaler_eventcount, scaler)
                 predicted_value_int = int(predicted_value[0][0])
                 if predicted_value_int < rs_traditional_int:
-                    predicted_value_int = predicted_value_int + predicted_value_offset
+                    predicted_value_int = predicted_value_int + predicted_value_offset*0.01*predicted_value_int
+                # num_current_replicas = get_app_current_replicas()
+                # tl_handler = tolerate_handler(predicted_value_int, num_current_replicas)
+                # predicted_prometheus_tolerate.set(tl_handler.get("predict_require_trigger_scaleup"))
+                # predicted_prometheus_use_tolerate.set(tl_handler.get("use_predict_tolerate"))
+                predicted_prometheus_tolerate.set(predicted_value_int)
+                predicted_prometheus_use_tolerate.set(0)
                 predicted_prometheus.set(predicted_value_int)
                 predicted_prometheus_prediction_mode.set(2)
                 predicted_prometheus_use_future_value.set(2)
@@ -222,16 +260,22 @@ while True:
             predicted_value = predict_values(merged_df, scaler_eventcount, scaler)
             predicted_value_int = int(predicted_value[0][0])
             if predicted_value_int < rs_traditional_int:
-                predicted_value_int = predicted_value_int + predicted_value_offset
+                predicted_value_int = predicted_value_int + predicted_value_offset*0.01*predicted_value_int
             # combine
             # scale up
             num_current_replicas = get_app_current_replicas()
             if predicted_value_int >= rs_traditional_int:
                 predicted_prometheus_use_future_value.set(2)
                 predicted_prometheus.set(predicted_value_int)
+                tl_handler = tolerate_handler(predicted_value_int, num_current_replicas)
+                predicted_prometheus_tolerate.set(tl_handler.get("predict_require_trigger_scaleup"))
+                predicted_prometheus_use_tolerate.set(tl_handler.get("use_predict_tolerate"))
             else:
                 predicted_prometheus_use_future_value.set(1)
                 predicted_prometheus.set(rs_traditional_int)
+                tl_handler = tolerate_handler(rs_traditional_int, num_current_replicas)
+                predicted_prometheus_tolerate.set(tl_handler.get("predict_require_trigger_scaleup"))
+                predicted_prometheus_use_tolerate.set(tl_handler.get("use_predict_tolerate"))
             predicted_prometheus_prediction_mode.set(3)
 
         elif prediction_mode() == 1:
@@ -243,7 +287,13 @@ while True:
             predicted_prometheus_use_future_value.set(1)
             predicted_prometheus_prediction_mode.set(1)
             rs_float = float(rs[0].get('value')[1])
+            predicted_prometheus_tolerate.set(int(rs_float))
+            predicted_prometheus_use_tolerate.set(0)
             predicted_prometheus.set(int(rs_float))
+            # num_current_replicas = get_app_current_replicas()
+            # tl_handler = tolerate_handler(int(rs_float), num_current_replicas)
+            # predicted_prometheus_tolerate.set(tl_handler.get("predict_require_trigger_scaleup"))
+            # predicted_prometheus_use_tolerate.set(tl_handler.get("use_predict_tolerate"))
         else:
             predicted_prometheus_prediction_mode.set(-1)
             predicted_prometheus_use_future_value.set(-1)

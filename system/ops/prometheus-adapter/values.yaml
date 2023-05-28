@@ -10,3 +10,7 @@ prometheus-adapter:
       metricsQuery: 'sum(predicted_prometheus{job="predict-controller"})'
       resources:
         namespaced: false
+    - seriesQuery: 'predicted_prometheus_tolerate{job="predict-controller", namespace="app-simulate", pod="app-simulate"}'
+      metricsQuery: 'sum(predicted_prometheus_tolerate{job="predict-controller"})'
+      resources:
+        namespaced: false

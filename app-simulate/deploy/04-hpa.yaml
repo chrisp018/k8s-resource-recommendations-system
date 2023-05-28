@@ -8,7 +8,8 @@ spec:
   - type: External
     external:
       metric:
-        name: predicted_prometheus
+        # name: predicted_prometheus
+        name: predicted_prometheus_tolerate
         selector:
           matchLabels:
             job: predict-controller
